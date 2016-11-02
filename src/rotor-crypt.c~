@@ -1,0 +1,19 @@
+/*****************************************************************************
+ * (c) 2016 BSD 2 clause adouble42/mrn@sdf                                   *
+ * rotor - "If knowledge can create problems, it is not through ignorance    * 
+ * that we can solve them." -- isaac asimov                                  *
+ *                                                                           *
+ * rotor-crypt.c - encryption and decryption functions                       *
+ *****************************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <termios.h>
+#include "ntru.h"
+#include "shake.h"
+#include "rotor.h"
+#include "rotor-keys.h"
+#include "progressbar.h"

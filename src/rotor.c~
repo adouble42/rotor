@@ -1,0 +1,280 @@
+
+/*****************************************************************************
+ * (c) 2016 BSD 2 clause adouble42/mrn@sdf                                   *
+ * rotor - "If knowledge can create problems, it is not through ignorance    * 
+ * that we can solve them." -- isaac asimov                                  *
+ *                                                                           *
+ * lightweight NTRU public key in block mode, with SHAKE-256 stream cipher   *
+ *****************************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+#include <string.h>
+#include <math.h>
+#include "ntru.h"
+#include "rotor.h"
+#include "rotor-keys.h"
+#include "shake.h"
+
+
+int main(int argc, char *argv[]) {
+    char plain_char[170];
+    strcpy(plain_char, "This text is a good fit in an NTRU message, so we'll not use " \
+                       "symmetric encryption and instead use the NTRU PKI to encrypt it.");
+    char shake_dec[170];
+    strcpy(shake_dec, "this is garbage");
+    uint8_t plain[170];    
+    char password_char[170];
+    FILE *Handle=NULL;
+    FILE *input, *output;
+    signed char fbuf[171];
+    size_t nt;
+    uint8_t shake_outp[NTRU_PRIVLEN];
+    uint8_t shake_finalp[NTRU_PRIVLEN];
+    char pkname[64];
+    char skname[64];
+    char sfname[64];
+    char ofname[64];
+    int encMode = 0;
+    int decMode = 0;
+    int keyGen = 0;
+    int show_params = 0;
+    
+    strcpy (pkname, "NTRUPublic.key");
+    strcpy (skname, "NTRUPrivate.key");
+    int opc;
+    for (opc = 1; opc < argc; opc++)
+    {
+	if (strcmp(argv[opc], "--pubkey") == 0) {
+		strncpy(pkname, argv[opc+1], 64);
+		opc++;
+	}
+        if (strcmp(argv[opc], "--privkey") == 0) {
+                strncpy(skname, argv[opc+1], 64);
+                opc++;
+        }
+        if (strcmp(argv[opc], "--infile") == 0) {
+                strncpy(sfname, argv[opc+1], 64);
+                opc++;
+        }
+        if (strcmp(argv[opc], "--enc") == 0) {
+                encMode = 1;
+		strncpy(ofname, sfname, 64);
+		strncat(ofname, ".enc", 64);
+        }
+        if (strcmp(argv[opc], "--dec") == 0) {
+		decMode = 1;
+		strncpy(ofname, sfname, 64);
+		ofname[(strlen(sfname)-4)] = '\0';
+        }
+        if (strcmp(argv[opc], "--keygen") == 0) {
+		keyGen = 1;
+        }
+	if (strcmp(argv[opc], "--show-params") == 0) {
+	        show_params = 1;
+	}
+    }
+            NtruRandGen rng = NTRU_RNG_DEFAULT;
+            NtruRandContext rand_ctx;
+
+    if (keyGen == 1) {
+	    static struct termios oldt, newt;
+	    tcgetattr( STDIN_FILENO, &oldt);
+    	    newt = oldt;
+
+	    /*setting the approriate bit in the termios struct*/
+    	    newt.c_lflag &= ~(ECHO);          
+
+	    /*setting the new bits*/
+            tcsetattr( STDIN_FILENO, TCSANOW, &newt);
+
+	    printf("enter a strong passphrase to protect the private key on disk: ");
+	    fgets(password_char, 100, stdin);
+	    printf("\n");
+	    tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
+ 	    /* generate an NTRU key */
+	    NtruEncKeyPair kp; // master gen set
+	    kp = rotor_keypair_generate();
+
+
+    uint8_t pub_arr[NTRU_PUBLEN];
+    ntru_export_pub(&kp.pub, pub_arr);
+    uint8_t priv_arr[NTRU_PRIVLEN];
+    ntru_export_priv(&kp.priv, priv_arr);
+
+    printf("exporting hex armored NTRU private key to file %s\n",skname);
+    rotor_exp_armorpriv(priv_arr, password_char, strlen(password_char), skname);
+    
+    printf("exporting hex armored NTRU public key to file %s\n",pkname);
+    rotor_exp_armorpub(pub_arr, pkname);
+    exit(EXIT_SUCCESS);
+}
+//    char buffer_int[4];
+//    int randomID = arc4random() % 2000 + 1000;
+//    printf("hash multiplier: [%i]\n",randomID);
+//    sprintf(buffer_int,"%i",randomID);
+//    for (i=64; i<68; i++)
+//      plain[i] = buffer_int[(i-64)];
+//    randomID=0;
+    if (show_params == 1) {
+    printf("256 bit mode comparison:\n");
+    printf("size of ciphertext EES1499EP1 params: %i\n",ntru_enc_len(&EES1499EP1));
+    printf("max length of plaintext EES1499EP1 params: %i\n",ntru_max_msg_len(&EES1499EP1));
+    printf("size of ciphertext EES1087EP2 params: %i\n",ntru_enc_len(&EES1087EP2));
+    printf("max length of plaintext EES1087EP2 params: %i\n",ntru_max_msg_len(&EES1087EP2));
+    printf("size of ciphertext EES1171EP1 params: %i\n",ntru_enc_len(&EES1171EP1));
+    printf("max length of plaintext EES1171EP1 params: %i\n",ntru_max_msg_len(&EES1171EP1));
+    printf("size of ciphertext NTRU_DEFAULT_PARAMS_128_BITS params: %i\n",ntru_enc_len(&NTRU_DEFAULT_PARAMS_128_BITS));
+    printf("max length of plaintext NTRU_DEFAULT_PARAMS_128_BITS params: %i\n",ntru_max_msg_len(&NTRU_DEFAULT_PARAMS_128_BITS));
+    printf("size of ciphertext NTRU_DEFAULT_PARAMS_256_BITS params: %i\n",ntru_enc_len(&NTRU_DEFAULT_PARAMS_256_BITS));
+    printf("max length of plaintext NTRU_DEFAULT_PARAMS_256_BITS params: %i\n",ntru_max_msg_len(&NTRU_DEFAULT_PARAMS_256_BITS));
+    printf("192 bits:\n");
+    printf("size of ciphertext EES887EP1 params: %i\n",ntru_enc_len(&EES887EP1));
+    printf("max length of plaintext EES887EP1 params: %i\n",ntru_max_msg_len(&EES887EP1));
+    printf("size of ciphertext EES1087EP1 params: %i\n",ntru_enc_len(&EES1087EP1));
+    printf("max length of plaintext EES1087EP1 params: %i\n",ntru_max_msg_len(&EES1087EP1));
+    }
+
+    NtruEncKeyPair kr; // recover from file
+    NtruEncPrivKey *krpr;
+    NtruEncPubKey *krpub;
+    
+
+    if (decMode == 1) { // don't load it unless we need it
+	    static struct termios oldt, newt;
+            tcgetattr( STDIN_FILENO, &oldt);
+            newt = oldt;
+ 
+            /*setting the approriate bit in the termios struct*/
+            newt.c_lflag &= ~(ECHO);
+
+            /*setting the new bits*/
+            tcsetattr( STDIN_FILENO, TCSANOW, &newt);
+
+            printf("enter coconut password to retrieve lime: ");
+	    fgets(password_char, 100, stdin);
+	    printf("\n");
+            tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
+
+    printf("decrypting NTRU private key from file %s\n",skname);
+    krpr = (NtruEncPrivKey *)malloc(sizeof(NtruEncPrivKey));
+    *krpr = rotor_load_armorpriv(password_char, strlen(password_char), skname);
+    printf("returned\n");
+    kr.priv = *krpr;
+    printf("private key loaded\n");
+    }
+    printf("importing NTRU public key from file %s\n",pkname);
+
+    krpub = (NtruEncPubKey *)malloc(sizeof(NtruEncPubKey));
+    *krpub = rotor_load_armorpub(pkname);
+    kr.pub = *krpub;
+    printf("keys imported.\n");
+
+    struct fileHeader {
+      int fileSize;
+    };
+    
+if (encMode == 1) {
+    NtruRandGen rng_sk = NTRU_RNG_DEFAULT;
+    NtruRandContext rand_sk_ctx;
+    uint8_t shake_key[170];
+    uint8_t stream_block[170];
+    uint8_t stream_in[170];
+    uint8_t stream_final[170];
+    uint8_t enc[NTRU_ENCLEN];
+    const void *fptr = (void *) fbuf;
+    struct fileHeader myInfo;
+    int remainder, xx;
+    float blocks;
+
+    struct stat in_info;
+    stat(sfname, &in_info);
+    input = fopen(sfname, "rb");
+    output = fopen(ofname, "wb");
+    myInfo.fileSize=in_info.st_size;
+    lseek((int)input,0, SEEK_SET);
+    blocks = floor((myInfo.fileSize / 170));
+    remainder = (myInfo.fileSize - (170 * blocks));
+    myInfo.fileSize=blocks;
+    fwrite(&myInfo, sizeof(struct fileHeader), 1, output);
+    if (ntru_rand_init(&rand_sk_ctx, &rng_sk) != NTRU_SUCCESS)
+        printf("rng_sk fail\n");
+    if (ntru_rand_generate(shake_key, 170, &rand_sk_ctx) != NTRU_SUCCESS) {
+        return NTRU_ERR_PRNG;
+    } else {
+      printf("generated 170 byte random key for SHAKE-256 stream\n");
+    }
+    shake_key[1] = (uint8_t) remainder; // encode actual size of final block
+    printf("encrypting: source -  %s | target - %s\n",sfname, ofname);
+    if (ntru_encrypt(shake_key, 170, &kr.pub, &EES1087EP2, &rand_sk_ctx, enc) == NTRU_SUCCESS)
+	fwrite(enc, sizeof(enc),1, output);
+    FIPS202_SHAKE256(shake_key, 170, (uint8_t *) stream_block, 170);
+    while ((nt=fread((void *)fptr,sizeof(char), 170, input))) {
+//      fbuf[nt] = '\0';
+      for (xx=0;xx<nt;xx++) {
+	stream_final[xx] = fbuf[xx] ^ stream_block[xx];
+      }
+      FIPS202_SHAKE256(fptr, nt, (uint8_t *) stream_block, 170);
+	    if (ntru_encrypt(stream_final, 170, &kr.pub, &EES1087EP2, &rand_sk_ctx, enc) == NTRU_SUCCESS)
+		fwrite(enc, sizeof(enc),1,output);
+    }
+
+    rewind(input);
+    fseek(input, (0-nt), SEEK_END);
+    memset((void *)fptr,0,sizeof(fptr));
+    fread((void *)fptr,sizeof(char), nt, input);
+    fbuf[nt] = '\0';
+    for (xx=0;xx<nt;xx++) {
+      stream_final[xx] = fbuf[xx] ^ stream_block[xx];
+    }
+    ntru_encrypt(stream_final, nt, &kr.pub, &EES1087EP2, &rand_sk_ctx, enc);
+    fwrite(enc, sizeof(enc),1,output);   
+    
+    ntru_rand_release(&rand_sk_ctx);
+    fclose(input);
+    fclose(output);
+}
+if (decMode == 1) {
+    NtruRandGen rng_sk = NTRU_RNG_DEFAULT;
+    NtruRandContext rand_sk_ctx;
+    uint8_t decp[NTRU_ENCLEN];
+    uint8_t dec[NTRU_ENCLEN];
+    uint8_t shake_key[170];
+    uint8_t stream_block[170];
+    uint8_t stream_in[170];
+    uint8_t stream_final[170];
+    struct fileHeader myInfo;
+    const void *decptr = (void *) decp;
+    int offset, xx,  blocks, remainder;
+    uint16_t dec_len;
+    if (ntru_rand_init(&rand_sk_ctx, &rng_sk) != NTRU_SUCCESS)
+        printf("rng_sk fail\n");
+    input = fopen(sfname, "rb");
+    output = fopen(ofname, "wb");
+    fread(&myInfo,sizeof(struct fileHeader),1,input);
+    fread((void *)decptr,sizeof(char),1495,input);
+    ntru_decrypt((void *)decptr, &kr, &EES1087EP2,(uint8_t *)shake_key, (uint16_t *) &dec_len);
+    printf("decrypting: source -  %s | target - %s\n",sfname, ofname);
+    FIPS202_SHAKE256(shake_key, 170, (unsigned char *) &stream_block, 170);
+    blocks = myInfo.fileSize;
+    remainder = (int) shake_key[1];
+    int blockCount = 0;
+    while ((nt=fread((void *)decptr,sizeof(char),1495, input)) == 1495) {
+      blockCount++;
+      ntru_decrypt((uint8_t *)decptr, &kr, &EES1087EP2, (uint8_t *) &dec, &dec_len);
+      if ((myInfo.fileSize + 1) == blockCount)
+	dec_len = remainder;
+      for (xx=0;xx<dec_len;xx++)
+	stream_final[xx] = dec[xx] ^ stream_block[xx];	
+      FIPS202_SHAKE256(stream_final, dec_len, (unsigned char *) &stream_block, dec_len);
+      fwrite((uint8_t *)stream_final, sizeof(char) * dec_len,1,output);
+    }
+    ntru_rand_release(&rand_sk_ctx);
+    fclose(input);
+    fclose(output);
+}
+}
