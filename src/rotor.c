@@ -16,6 +16,7 @@
 #include "ntru.h"
 #include "rotor.h"
 #include "rotor-crypt.h"
+#include "rotor-console.h"
 #include "rotor-keys.h"
 #include "rotor-extra.h"
 #include "shake.h"
@@ -94,22 +95,14 @@ int main(int argc, char *argv[]) {
     
 
   if (decMode == 1) { // don't load it unless we need it
-    static struct termios oldt, newt;
-    tcgetattr( STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ECHO);
-    tcsetattr( STDIN_FILENO, TCSANOW, &newt);
-    printf("enter coconut password to retrieve lime: ");
-    fgets(password_char, 100, stdin);
-    printf("\n");
-    tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
-
+    sprintf(password_char,"%s", rotor_console_secret("enter coconut password to retrieve lime: ", 100, 0));
     printf("decrypting NTRU private key from file %s\n",skname);
     krpr = (NtruEncPrivKey *)malloc(sizeof(NtruEncPrivKey));
     *krpr = rotor_load_armorpriv(password_char, strlen(password_char), skname);
     kr.priv = *krpr;
     printf("private key loaded\n");
   }
+
   printf("importing NTRU public key from file %s\n",pkname);
 
   krpub = (NtruEncPubKey *)malloc(sizeof(NtruEncPubKey));

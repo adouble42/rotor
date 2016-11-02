@@ -24,16 +24,17 @@
  *OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __ROTOR_CRYPT_H
-#define __ROTOR_CRYPT_H
+
+#ifndef __ROTOR_CONSOLE_H
+#define __ROTOR_CONSOLE_H
 
 /*
- * rotor encryption and decryption master functions
+ * rotor console functions
  *
- * rotor_decrypt_file: use keypair to decrypt file
+ * rotor_console_secret: silence echo and read a password
  *
  */
 
-void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname);
+const char *rotor_console_secret(char *msg, int secret_len, int v);
 
 #endif

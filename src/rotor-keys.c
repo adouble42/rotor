@@ -15,6 +15,7 @@
 #include "ntru.h"
 #include "shake.h"
 #include "rotor.h"
+#include "rotor-console.h"
 #include "rotor-keys.h"
 #include "progressbar.h"
 
@@ -290,19 +291,9 @@ void rotor_user_keygen(char *skname, char *pkname) {
   NtruRandContext rand_ctx;
   uint8_t pub_arr[NTRU_PUBLEN];
   uint8_t priv_arr[NTRU_PRIVLEN];
-  static struct termios oldt, newt;
   char password_char[170];
-  
-  tcgetattr(STDIN_FILENO, &oldt);
-  newt = oldt;
-  newt.c_lflag &= ~(ECHO); // setting echo bit in termios
-  tcsetattr(STDIN_FILENO, TCSANOW, &newt); // no echo
 
-  printf("enter a strong passphrase to protect the private key on disk: ");
-  fgets(password_char, 100, stdin);
-  printf("\n");
-  tcsetattr(STDIN_FILENO, TCSANOW, &oldt); // echo on
-
+  sprintf(password_char, "%s", rotor_console_secret("enter a strong passphrase to protect the private key on disk: ", 100, 1));
   kp = rotor_keypair_generate(); // generate keypair
   ntru_export_pub(&kp.pub, pub_arr);
   ntru_export_priv(&kp.priv, priv_arr);
