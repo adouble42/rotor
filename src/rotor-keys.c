@@ -14,8 +14,9 @@
 #include <termios.h>
 #include "ntru.h"
 #include "shake.h"
+#include "yescrypt.h"
+#include "blake512.h"
 #include "rotor.h"
-#include "rotor-console.h"
 #include "rotor-keys.h"
 #include "progressbar.h"
 
@@ -137,7 +138,7 @@ void rotor_exp_armorpriv(uint8_t *priv_keyx, char *secret, int s_len, char *outf
   sprintf(header_privline,"%s\n", PRIVATE_KEYTAG);
   FIPS202_SHAKE256((uint8_t *)secret, s_len, (uint8_t *)shk_outp, NTRU_PRIVLEN);
   progress = KDF_ROUNDS/100;
-  progressbar *cpro = progressbar_new("deriving encryption key ",100);
+  progressbar *cpro = progressbar_new("deriving stream key ",100);
 
   for (i=0; i<KDF_ROUNDS; i++) { // put the lime in the coconut
     if (i == progress) {
@@ -215,8 +216,11 @@ void rotor_exp_armorpub(uint8_t *pub_keyx, char *outfile) {
  * rotor_load_armorpriv: import encrypted, armored rotor private key
  */
 
-struct NtruEncPrivKey rotor_load_armorpriv(char *secret, int s_len, char *infile) {
+struct NtruEncPrivKey rotor_load_armorpriv(const uint8_t *secret, int s_len, char *infile) {
   NtruEncPrivKey kr_out;
+  yescrypt_local_t locald;
+  const char *salt = "saljy";
+  uint8_t dk[64];
   uint8_t shk_outp[NTRU_PRIVLEN];
   uint8_t shk_finalp[NTRU_PRIVLEN];
   uint8_t priv_imp[NTRU_PRIVLEN];
@@ -227,12 +231,21 @@ struct NtruEncPrivKey rotor_load_armorpriv(char *secret, int s_len, char *infile
   FILE *In=NULL;
   int i, progress;
 
+  yescrypt_init_local(&locald);
+  printf("modified yescrypt KDF initialized\n");
+  printf("current yescrypt parameters: 32/8/8/12/9/RW/64\n");
+  printf("instead of just a couple rounds of PBKDF, we do a few hundred.\nthis gets you in the front door.\n");
+  printf("enhanced with BLAKE 256 - https://131002.net/blake/\n");
+  yescrypt_kdf(NULL, &locald, secret, strlen((char *)secret), (uint8_t *) salt, strlen (salt), 32, 8, 8, 12, 9, YESCRYPT_RW, dk, 64);
+  yescrypt_free_local(&locald);
+  printf("now for the next key derivation -SHAKE 256.\n\n");
+  FIPS202_SHAKE256(dk, 64, (uint8_t *)shk_finalp, 170);
   progress = KDF_ROUNDS/100;
   In=fopen(infile,"rb");
   sprintf(header_privline,"%s\n", PRIVATE_KEYTAG);
   if (In!=NULL) {
-    FIPS202_SHAKE256((uint8_t *)secret, s_len, (uint8_t *)shk_outp, NTRU_PRIVLEN);
-    progressbar *cpro = progressbar_new("deriving decryption key ",100);
+    FIPS202_SHAKE256(shk_finalp, 170, (uint8_t *)shk_outp, NTRU_PRIVLEN);
+    progressbar *cpro = progressbar_new("processing decryption key ",100);
     for (i=0; i<KDF_ROUNDS; i++) { // put the lime in the coconut
       if (i == progress) {
 	progressbar_inc(cpro);
@@ -286,20 +299,53 @@ struct NtruEncPubKey rotor_load_armorpub(char *infile) {
 }
 
 void rotor_user_keygen(char *skname, char *pkname) {
+  static struct termios oldt, newt;
   NtruEncKeyPair kp;
   NtruRandGen rng = NTRU_RNG_DEFAULT;
   NtruRandContext rand_ctx;
   uint8_t pub_arr[NTRU_PUBLEN];
   uint8_t priv_arr[NTRU_PRIVLEN];
+  uint8_t secret[64];
+  uint8_t verify[64];
+  const char *salt = "saljy";
   char password_char[170];
+  yescrypt_local_t locald;
+  uint8_t dk[64];
+  uint8_t dkt[64];
+  int i, dklen,v;
+  dklen=64;
+  v=1;
+  
+  tcgetattr(STDIN_FILENO, &oldt); // kill the lights
+  newt=oldt;
+  newt.c_lflag &= ~(ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+  
+  do {
+    printf("choose a strong passphrase to protect your private key: ");
+    fgets(secret, 64, stdin);
+    printf("\n");
+    if (v == 1) {
+      printf("reenter to confirm: ");
+      fgets(verify, 64, stdin);
+      printf("\n");
+    }
+  } while (((v == 1) && (strncmp(secret, verify, strlen(secret)))));
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt); // lights on
 
-  sprintf(password_char, "%s", rotor_console_secret("enter a strong passphrase to protect the private key on disk: ", 100, 1));
+  yescrypt_init_local(&locald);
+  printf("modified yescrypt KDF initialized\n");
+  printf("current yescrypt parameters: 32/8/8/12/9/RW/64\n");
+  printf("instead of just a couple rounds of PBKDF, we do a few hundred.\nthis gets you in the front door.\n");
+  printf("enhanced with BLAKE 256 - https://131002.net/blake/\n");
+  yescrypt_kdf(NULL, &locald, secret, strlen((char *)secret), (uint8_t *) salt, strlen (salt), 32, 8, 8, 12, 9, YESCRYPT_RW, dk, 64);
+  yescrypt_free_local(&locald);
+  printf("now for the next key derivation -SHAKE 256.\n\n");
+  FIPS202_SHAKE256(dk, 64, (uint8_t *)password_char, 170);
   kp = rotor_keypair_generate(); // generate keypair
   ntru_export_pub(&kp.pub, pub_arr);
   ntru_export_priv(&kp.priv, priv_arr);
-
-  printf("encrypting hex armored NTRU private key to file %s\n", skname);
-  rotor_exp_armorpriv(priv_arr, password_char, strlen(password_char), skname);
+  rotor_exp_armorpriv(priv_arr, password_char, 170, skname);
 
   printf("exporting hex armored NTRU public key to file %s\n", pkname);
   rotor_exp_armorpub(pub_arr, pkname);

@@ -35,6 +35,6 @@
  *
  */
 
-const char *rotor_console_secret(char *msg, int secret_len, int v);
+void rotor_console_secret(uint8_t *pass, char *msg, int secret_len, int v);
 
 #endif

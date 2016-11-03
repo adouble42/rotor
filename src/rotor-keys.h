@@ -55,7 +55,7 @@ void rotor_exp_armorpub(uint8_t pub_keyx[NTRU_PUBLEN], char *outfile);
  * rotor_load_armorpriv: import encrypted, armored rotor private key
  */
 
-struct NtruEncPrivKey rotor_load_armorpriv(char *secret, int s_len, char *infile);
+struct NtruEncPrivKey rotor_load_armorpriv(const uint8_t *secret, int s_len, char *infile);
 
 /*
  * rotor_load_armorpub: import armored rotor public key

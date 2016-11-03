@@ -21,17 +21,19 @@
  */
 
 
-const char *rotor_console_secret(char *msg, int secret_len, int v) {
-  char *secret =(char *)malloc((sizeof(char))*secret_len);
+void rotor_console_secret(uint8_t *pass, char *msg, int secret_len, int v) {
   static struct termios oldt, newt;
-  char *verify =(char *)malloc((sizeof(char))*secret_len);
+  //pass = (uint8_t *)malloc(64*sizeof(uint8_t));;
+  uint8_t secret[64];
+  uint8_t verify[64];
+  int i;
   
   tcgetattr(STDIN_FILENO, &oldt);
   newt=oldt;
   newt.c_lflag &= ~(ECHO);
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);
   do {
-    printf("%s",msg);
+    printf("choose a strong passphrase to protect your private key: ",msg);
     fgets(secret, secret_len, stdin);
     printf("\n");
     if (v == 1) {
@@ -40,7 +42,8 @@ const char *rotor_console_secret(char *msg, int secret_len, int v) {
       printf("\n");
     }
   } while (((v == 1) && (strncmp(secret, verify, strlen(secret)))));
+  strcpy(*pass, (char *)secret);
+  pass[strlen((char *)secret)] = '\0';
+  printf("%s\n",(const char *)pass);
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-  free(verify);
-  return (secret);
 }
