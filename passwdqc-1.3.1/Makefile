@@ -133,6 +133,7 @@ utils_wrapped: $(BINS)
 
 $(STATIC_LIB): $(OBJS_LIB)
 	$(AR) $(STATIC_LIB) $(OBJS_LIB)
+	cp $(STATIC_LIB) ../lib/libpasswdqc.a
 
 $(SHARED_LIB): $(OBJS_LIB) $(MAP_LIB)
 	$(LD_lib) $(LDFLAGS_lib) $(OBJS_LIB) $(LDLIBS_lib) -o $(SHARED_LIB)

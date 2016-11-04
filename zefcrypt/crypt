@@ -1,0 +1,12 @@
+ yescrypt_kdf(NULL, &local, (const uint8_t *) passwd, strlen(passwd), (const uint8_t *) salt, strlen(salt), 32, 32, 8,3,9, YESCRYPT_RW, dk, 64);
+ 32gb
+ yescrypt_kdf(NULL, &local, (const uint8_t *) passwd, strlen(passwd), (const uint8_t *) salt, strlen(salt), 32, 4, 8,3,9, YESCRYPT_RW, dk, 64)
+ 3gb
+   yescrypt_kdf(NULL, &local, (const uint8_t *) passwd, strlen(passwd), (const uint8_t *) salt, strlen(salt), 32, 2, 4,9,9, YESCRYPT_RW, dk, 64)
+   yescrypt_kdf(NULL, &local, (const uint8_t *) passwd, strlen(passwd), (const uint8_t *) salt, strlen(salt), 32, 3, 8,4,9, YESCRYPT_RW, dk, 64)
+     yescrypt_kdf(NULL, &local, (const uint8_t *) passwd, strlen(passwd), (const uint8_t *) salt, strlen(salt), 32, 5, 8,4,9, YESCRYPT_RW, dk, 64)
+
+higher seclevel - workstation
+  yescrypt_kdf(NULL, &local, (const uint8_t *) passwd, strlen(passwd), (const uint8_t *) salt, strlen(salt), 32, 5, 8,12,10, YESCRYPT_RW, dk, 64);
+
+yescrypt_kdf(NULL, &local, (const uint8_t *) passwd, strlen(passwd), (const uint8_t *) salt, strlen(salt), 32, 5, 6,16,10, YESCRYPT_RW, dk, 64);

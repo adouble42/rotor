@@ -1,0 +1,85 @@
+# Copyright 2013,2014 Alexander Peslyak
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+CC = gcc -DBLAKE512 -DHMAC_MODE -I./ -L/usr/local/lib
+LD = $(CC) -L/usr/local/lib
+RM = rm -f
+OMPFLAGS = -fopenmp -lomp
+OMPFLAGS_MAYBE = $(OMPFLAGS)
+CFLAGS = -Wall -march=native -O2 -funroll-loops -fomit-frame-pointer $(OMPFLAGS_MAYBE) -I/usr/local/include -DBLAKE512 -DHMAC_MODE -I./ -lomp
+#CFLAGS = -Wall -march=native -O2 -fomit-frame-pointer $(OMPFLAGS_MAYBE)
+#CFLAGS = -Wall -O2 -fomit-frame-pointer $(OMPFLAGS_MAYBE)
+LDFLAGS = -s $(OMPFLAGS_MAYBE) -L/usr/local/lib
+
+PROJ = phc-test initrom userom
+OBJS_CORE = yescrypt-best.o
+OBJS_TESTS = $(OBJS_CORE) yescrypt-common.o blake256.o tests.o
+OBJS_PHC = $(OBJS_CORE) yescrypt-common.o blake256.o phc-test.o
+OBJS_INITROM = $(OBJS_CORE) yescrypt-common.o blake256.o initrom.o
+OBJS_USEROM = $(OBJS_CORE) yescrypt-common.o blake256.o userom.o
+OBJS_RM = yescrypt-*.o
+BINDIR = bin
+
+all: $(PROJ)
+
+check:  phc-test
+	@echo 'Running main tests'
+	@time ./tests | tee TESTS-OUT
+	@diff -U0 TESTS-OK TESTS-OUT && echo PASSED || echo FAILED
+	@if [ -e PHC-TEST-OK ]; then \
+		echo 'Running PHC tests'; \
+		time ./phc-test > PHC-TEST-OUT; \
+		cmp PHC-TEST-OK PHC-TEST-OUT && echo PASSED || echo FAILED; \
+	fi
+
+tests: $(OBJS_TESTS) blake512.o
+	$(LD) $(LDFLAGS) $(OBJS_TESTS) -o $@
+
+phc-test.o: phc.c
+	$(CC) -c $(CFLAGS) -DTEST phc.c -o $@
+
+blake512.o: blake512.c
+	$(CC) -c $(CFLAGS) blake512.c -o $@
+
+phc-test: $(OBJS_PHC)
+	$(LD) $(LDFLAGS) $(OBJS_PHC) -o $@
+
+initrom: $(OBJS_INITROM)
+	$(LD) $(LDFLAGS) $(OBJS_INITROM) -o $@
+
+userom: $(OBJS_USEROM)
+	$(LD) $(LDFLAGS) $(OMPFLAGS) $(OBJS_USEROM) -o $@
+
+userom.o: userom.c
+	$(CC) -c $(CFLAGS) $(OMPFLAGS) $*.c
+
+.c.o:
+	$(CC) -c $(CFLAGS) $*.c
+
+yescrypt-best.o: yescrypt-platform.c yescrypt-simd.o blake256.o
+yescrypt-simd.o: yescrypt-platform.c blake256.o
+
+blake512hmac.o:
+	$(CC) -c -Wall -march=native -O2 -funroll-loops -fomit-frame-pointer -fopenmp blake512.c blakesum.c -DBLAKE512 -DHMAC_MODE
+
+
+clean:
+	$(RM) $(PROJ)
+	$(RM) $(OBJS_TESTS) $(OBJS_PHC) $(OBJS_INITROM) $(OBJS_USEROM)
+	$(RM) $(OBJS_RM)
+	$(RM) TESTS-OUT PHC-TEST-OUT
