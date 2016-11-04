@@ -16,6 +16,7 @@
 #include "ntru.h"
 #include "rotor.h"
 #include "yescrypt.h"
+#include "passwdqc.h"
 #include "rotor-crypt.h"
 #include "rotor-keys.h"
 #include "rotor-extra.h"
@@ -109,6 +110,7 @@ int main(int argc, char *argv[]) {
     
     krpr = (NtruEncPrivKey *)malloc(sizeof(NtruEncPrivKey));
     *krpr = rotor_load_armorpriv(secret, strlen(secret), skname);
+    _passwdqc_memzero(&secret, sizeof(secret)); // done with you
     kr.priv = *krpr;
     printf("private key loaded\n");
   }
@@ -126,6 +128,8 @@ int main(int argc, char *argv[]) {
   if (decMode == 1) {
     rotor_decrypt_file(kr, sfname, ofname);
   }
+  _passwdqc_memzero(&kr, sizeof(kr)); // don't hold on to the past
+  _passwdqc_memzero(&krpr, sizeof(krpr)); // it inhibits growth
   free(krpr);
   free(krpub);
 }

@@ -159,11 +159,19 @@ void rotor_exp_armorpriv(uint8_t *priv_keyx, char *secret, int s_len, char *outf
     fwrite(header_privline,sizeof(char),sizeof(header_privline),Out);
     int xl;
     FIPS202_SHAKE256(shk_outp, NTRU_PRIVLEN, (uint8_t *)shk_finalp, NTRU_PRIVLEN);
-    _passwdqc_memzero(&shk_outp, NTRU_PRIVLEN); // burn it down
+    _passwdqc_memzero(&shk_outp, NTRU_PRIVLEN); // sick of this town
     for (xl=0;xl<NTRU_PRIVLEN;xl++) {
       shk_outp[xl] = priv_keyx[xl] ^ shk_finalp[xl];
+      if (xl & 1) { // with kerosene around
+	priv_keyx[xl] = '\72'; // there's always something
+	shk_finalp[xl] = '\72'; // to do
+      } else {
+	priv_keyx[xl] = '\65'; // set me
+	shk_finalp[xl] = '\65'; // on fire
+      }
     }
-    _passwdqc_memzero(&shk_finalp, sizeof(shk_finalp)); // down to the ground
+    _passwdqc_memzero(&shk_finalp, sizeof(shk_finalp)); // kerosene
+    _passwdqc_memzero(&priv_keyx, sizeof(priv_keyx));
     strncpy (armored_key, bytesToHexString(shk_outp,NTRU_PRIVLEN), (NTRU_PRIVLEN*2));
     _passwdqc_memzero(&shk_outp, sizeof(shk_outp)); // sick of this line yet?
     x=0;
@@ -280,6 +288,13 @@ struct NtruEncPrivKey rotor_load_armorpriv(const uint8_t *secret, int s_len, cha
     _passwdqc_memzero(&p_buf, sizeof(p_buf));
     for (i=0; i<NTRU_PRIVLEN; i++) {
       shk_outp[i] = priv_imp[i] ^ shk_finalp[i];
+      if (i & 1) { // destroy previous state as we decrypt
+	priv_imp[i] = '\72'; // always something
+	shk_finalp[i] = '\72'; // there to
+      } else {
+	priv_imp[i] = '\65'; // remind
+	shk_finalp[i] = '\65'; // me
+      }
     }
     _passwdqc_memzero(&priv_imp, sizeof(priv_imp)); // yawwwwwn
     _passwdqc_memzero(&shk_finalp, sizeof(shk_finalp));
