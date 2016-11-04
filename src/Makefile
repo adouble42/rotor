@@ -11,7 +11,7 @@ libntru:
 	mv ../libntru/libntru.a ../lib
 
 libyescrypt.a:
-	make -C ../zefcrypt libyescrypt.a
+	make -C ../zefcrypt all
 
 libpasswdqc.a:
 	make -C ../passwdqc-1.3.1 libpasswdqc.a
