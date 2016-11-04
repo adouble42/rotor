@@ -138,6 +138,7 @@ void rotor_exp_armorpriv(uint8_t *priv_keyx, char *secret, int s_len, char *outf
 
   sprintf(header_privline,"%s\n", PRIVATE_KEYTAG);
   FIPS202_SHAKE256((uint8_t *)secret, s_len, (uint8_t *)shk_outp, NTRU_PRIVLEN);
+  _passwdqc_memzero(&secret, sizeof(secret)); // up in smoke
   progress = KDF_ROUNDS/100;
   progressbar *cpro = progressbar_new("deriving stream key ",100);
 
@@ -149,6 +150,7 @@ void rotor_exp_armorpriv(uint8_t *priv_keyx, char *secret, int s_len, char *outf
     FIPS202_SHAKE256(shk_outp, NTRU_PRIVLEN, (uint8_t *)shk_finalp, NTRU_PRIVLEN);
     FIPS202_SHAKE256(shk_finalp, NTRU_PRIVLEN, (uint8_t *)shk_outp, NTRU_PRIVLEN);
   }
+  _passwdqc_memzero(&shk_finalp, NTRU_PRIVLEN); // smash the state!!!
   progressbar_inc(cpro);
   progressbar_finish(cpro);
   Out=fopen(outfile,"wb");
@@ -157,19 +159,28 @@ void rotor_exp_armorpriv(uint8_t *priv_keyx, char *secret, int s_len, char *outf
     fwrite(header_privline,sizeof(char),sizeof(header_privline),Out);
     int xl;
     FIPS202_SHAKE256(shk_outp, NTRU_PRIVLEN, (uint8_t *)shk_finalp, NTRU_PRIVLEN);
+    _passwdqc_memzero(&shk_outp, NTRU_PRIVLEN); // burn it down
     for (xl=0;xl<NTRU_PRIVLEN;xl++) {
       shk_outp[xl] = priv_keyx[xl] ^ shk_finalp[xl];
     }
+    _passwdqc_memzero(&shk_finalp, sizeof(shk_finalp)); // down to the ground
     strncpy (armored_key, bytesToHexString(shk_outp,NTRU_PRIVLEN), (NTRU_PRIVLEN*2));
+    _passwdqc_memzero(&shk_outp, sizeof(shk_outp)); // sick of this line yet?
     x=0;
     for (i=0;i<(NTRU_PRIVLEN*2);i++) {
       x++;
       fwrite(&armored_key[i],1,1,Out);
+      if (i & 1) {
+	armored_key[i] = '\72'; // siiiiiinging in the rain
+      } else {
+	armored_key[i] = '\65'; // just siiiiiiiiiiiinging in the rain
+      }
       if (x==72) {
 	fwrite("\n",1,1,Out);
 	x=0;
       }
     }
+    _passwdqc_memzero(&armored_key, sizeof(armored_key)); // fuck yo couch
     fwrite("\n",1,1,Out);
     for (i=0;i<((sizeof(header_privline))-1);i++) {
       fwrite("-",1,1,Out);
@@ -341,12 +352,13 @@ void rotor_user_keygen(char *skname, char *pkname) {
       _passwdqc_memzero(&secret, strlen(secret));
     }
     fgets(secret, 64, stdin);
+    printf("\nchecking for strength with passwdqc... ");
     check_reason = passwdqc_check(&params.qc, secret, NULL, NULL);
     if (!check_reason) {
       ok_pass = 1;
       printf("OK\n");
     } else {
-      printf("\nBad passphrase: (%s)\n", check_reason);
+      printf("Bad passphrase: (%s)\n", check_reason);
     }
     if ((v == 1) && (ok_pass == 1)) {
       printf("reenter to confirm: ");
@@ -364,7 +376,7 @@ void rotor_user_keygen(char *skname, char *pkname) {
   printf("enhanced with BLAKE 256 - https://131002.net/blake/\n");
   yescrypt_kdf(NULL, &locald, secret, strlen((char *)secret), (uint8_t *) salt, strlen (salt), 32, 8, 8, 12, 9, YESCRYPT_RW, dk, 64);
   yescrypt_free_local(&locald);
-  _passwdqc_memzero(&secret, strlen(secret)); // don't need this any more
+  _passwdqc_memzero(&secret, sizeof(secret)); // don't need this any more
   printf("now for the next key derivation -SHAKE 256.\n\n");
   FIPS202_SHAKE256(dk, 64, (uint8_t *)password_char, 170);
   _passwdqc_memzero(&dk, 64); // or this
