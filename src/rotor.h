@@ -27,17 +27,6 @@
 #ifndef __ROTOR_H
 #define __ROTOR_H
 
-// whether or not to use mlock() and mlockall() functions to make sure
-// security sensitive constructs are held in wired memory and not swapped
-// even if the swap is encrypted we shouldn't trust it
-
-#ifndef __ROTOR_MLOCK
-#ifndef __APPLE__
-#define __ROTOR_MLOCK
-#endif
-#endif
-
-
 #define ROTOR_MAJOR 0
 #define ROTOR_MINOR 77
 

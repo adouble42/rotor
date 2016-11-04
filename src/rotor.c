@@ -16,15 +16,11 @@
 #include "ntru.h"
 #include "rotor.h"
 #include "yescrypt.h"
-#include "passwdqc.h"
 #include "rotor-crypt.h"
 #include "rotor-keys.h"
 #include "rotor-extra.h"
 #include "shake.h"
 
-#ifdef __ROTOR_MLOCK
-#include <sys/mman.h>
-#endif
 
 int main(int argc, char *argv[]) {
   uint8_t plain[170];    
@@ -38,15 +34,7 @@ int main(int argc, char *argv[]) {
   int keyGen = 0;
   int show_params = 0;
   int inFile = 0;
-
-  printf("rotor - version %i.%i\n(c)2016 mrn@sdf.org\n",ROTOR_MAJOR,ROTOR_MINOR);
-#ifdef __ROTOR_MLOCK
-  printf("rotor was built with use of mlock() and mlockall() enabled. sensitive data will not be swapped to disk.\n\n");
-#endif
-#ifndef __ROTOR_MLOCK
-  printf("rotor was not built with use of mlock() and mlockall() enabled.\n this may result in sensitive information being swapped to disk, although sensitive data is burned immediately after use.\n\n");
-#endif
-  
+    
   strcpy (pkname, "NTRUPublic.key");
   strcpy (skname, "NTRUPrivate.key");
   int opc;
@@ -80,6 +68,7 @@ int main(int argc, char *argv[]) {
       keyGen = 1;
     }
     if (strcmp(argv[opc], "--version") == 0) {
+      printf("rotor - version %i.%i\n(c)2016 mrn@sdf.org\n",ROTOR_MAJOR,ROTOR_MINOR);
       exit(0);
     }
     if (strcmp(argv[opc], "--show-params") == 0) {
@@ -103,14 +92,11 @@ int main(int argc, char *argv[]) {
   NtruEncKeyPair kr; // recover from file
   NtruEncPrivKey *krpr;
   NtruEncPubKey *krpub;
-          
+    
+
   if (decMode == 1) { // don't load it unless we need it
     static struct termios oldt, newt;
     uint8_t secret[64];
-
-#ifdef __ROTOR_MLOCK
-    mlockall(MCL_CURRENT);
-#endif
     
     tcgetattr(STDIN_FILENO, &oldt); // kill the lights
     newt=oldt;
@@ -123,7 +109,6 @@ int main(int argc, char *argv[]) {
     
     krpr = (NtruEncPrivKey *)malloc(sizeof(NtruEncPrivKey));
     *krpr = rotor_load_armorpriv(secret, strlen(secret), skname);
-    _passwdqc_memzero(&secret, sizeof(secret)); // done with you
     kr.priv = *krpr;
     printf("private key loaded\n");
   }
@@ -141,13 +126,6 @@ int main(int argc, char *argv[]) {
   if (decMode == 1) {
     rotor_decrypt_file(kr, sfname, ofname);
   }
-  _passwdqc_memzero(&kr, sizeof(kr)); // don't hold on to the past
-  _passwdqc_memzero(&krpr, sizeof(krpr)); // it inhibits growth
   free(krpr);
   free(krpub);
-  #ifdef __ROTOR_MLOCK
-  if (decMode == 1) {
-    munlockall();
-  }
-  #endif
 }
