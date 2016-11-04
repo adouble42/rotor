@@ -21,6 +21,10 @@
 #include "rotor-keys.h"
 #include "progressbar.h"
 
+#ifdef __ROTOR_MLOCK
+#include <sys/mman.h>
+#endif
+
 char const *strip="\r\n"; // strip newlines from armored keys
 
 int zstring_search_chr(const char *token,char s){
@@ -116,11 +120,21 @@ struct NtruEncKeyPair rotor_keypair_generate() {
   NtruRandGen rng = NTRU_RNG_DEFAULT;
   NtruRandContext rand_ctx;
 
+#ifdef __ROTOR_MLOCK
+  mlock(&keypair, sizeof(NtruEncKeyPair));
+  mlock(&rng, sizeof(NtruRandGen));
+  mlock(&rand_ctx, sizeof(NtruRandContext));
+#endif
+  
   if (ntru_rand_init(&rand_ctx, &rng) != NTRU_SUCCESS)
       printf("rotor_keypair_generate: rng fail\n");
   if (ntru_gen_key_pair(&EES1087EP2, &keypair, &rand_ctx) != NTRU_SUCCESS)
       printf("rotor_keypair_generate: keygen fail\n");
   ntru_rand_release(&rand_ctx);
+#ifdef __ROTOR_MLOCK
+  munlock(&rng, sizeof(rng));
+  munlock(&rand_ctx, sizeof(rand_ctx));
+#endif
   return(keypair);
 }
 
@@ -136,6 +150,13 @@ void rotor_exp_armorpriv(uint8_t *priv_keyx, char *secret, int s_len, char *outf
   FILE *Out=NULL;
   int i, x, progress;
 
+#ifdef __ROTOR_MLOCK
+  mlock(&shk_outp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  mlock(&shk_finalp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  mlock(&secret, sizeof(secret));
+  mlock(&priv_keyx, sizeof(priv_keyx));
+#endif
+  
   sprintf(header_privline,"%s\n", PRIVATE_KEYTAG);
   FIPS202_SHAKE256((uint8_t *)secret, s_len, (uint8_t *)shk_outp, NTRU_PRIVLEN);
   progress = KDF_ROUNDS/100;
@@ -170,6 +191,12 @@ void rotor_exp_armorpriv(uint8_t *priv_keyx, char *secret, int s_len, char *outf
 	x=0;
       }
     }
+#ifdef __ROTOR_MLOCK
+  munlock(&shk_outp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  munlock(&shk_finalp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  munlock(&secret, sizeof(secret));
+  munlock(&priv_keyx, sizeof(priv_keyx));
+#endif
     fwrite("\n",1,1,Out);
     for (i=0;i<((sizeof(header_privline))-1);i++) {
       fwrite("-",1,1,Out);
