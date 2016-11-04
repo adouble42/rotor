@@ -31,10 +31,10 @@ void rotor_show_ntru_params() {
 }
 
 void rotor_show_help() {
-  printf("rotor - version %i.%i\n(c)2016 mrn@sdf.org\n\n",ROTOR_MAJOR,ROTOR_MINOR);
   printf("syntax: rotor <options>\n");
   printf("--help:       show this help screen\n");
   printf("--version:    show version information\n");
+  printf("              also shows whether use of mlock() and mlockall() enabled\n");
   printf("--show-params:dump some NTRU parameter specs\n\n");
   printf("--keygen:     generate public and private keys\n");
   printf("              if no file names specified, use NTRUPrivate.key and NTRUPublic.key in current directory. will overwrite! be careful!\n\n");
@@ -43,5 +43,5 @@ void rotor_show_help() {
   printf("--pubkey:     specify name of public key, default NTRUPublic.key\n");
   printf("--enc:        encrypt file specified by --infile\n");
   printf("--dec:        decrypt file specified by --infile\n");
-  printf("\n\nrotor uses a hybrid of NTRU public key encryption and the SHAKE-256 XOF function to encrypt your files.\nthis is experimental software!!! you have been warned\n");
+  printf("\n\nthis is experimental software!!! you have been warned\n");
 }
