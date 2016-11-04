@@ -83,6 +83,16 @@ void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname) {
     fwrite((uint8_t *)stream_final, sizeof(char) * dec_len,1,output);
   }
   ntru_rand_release(&rand_sk_ctx);
+  burn(&kr, sizeof(NtruEncKeyPair));
+  burn(&rng_sk, sizeof(NtruRandGen));
+  burn(&rand_sk_ctx, sizeof(NtruRandContext));
+  burn(&decp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  burn(&dec, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  burn(&shake_key, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  burn(&stream_block, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  burn(&stream_in, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  burn(&stream_final, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  burn(&myInfo, sizeof(struct fileHeader));
 #ifdef __ROTOR_MLOCK
   munlock(&kr, sizeof(NtruEncKeyPair));
   munlock(&rng_sk, sizeof(NtruRandGen));
@@ -176,6 +186,15 @@ void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname){
     fwrite(enc, sizeof(enc),1,output);   
     
     ntru_rand_release(&rand_sk_ctx);
+
+    burn(&kr, sizeof(NtruEncKeyPair));
+    burn(&rng_sk, sizeof(NtruRandGen));
+    burn(&rand_sk_ctx, sizeof(NtruRandContext));
+    burn(&enc, (sizeof(uint8_t)*NTRU_PRIVLEN));
+    burn(&fbuf, (sizeof(char)*171));
+    burn(&stream_block, (sizeof(uint8_t)*NTRU_PRIVLEN));
+    burn(&stream_in, (sizeof(uint8_t)*NTRU_PRIVLEN));
+    burn(&stream_final, (sizeof(uint8_t)*NTRU_PRIVLEN));
 #ifdef __ROTOR_MLOCK
     munlock(&kr, sizeof(NtruEncKeyPair));
     munlock(&rng_sk, sizeof(NtruRandGen));
