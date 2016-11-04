@@ -1,5 +1,7 @@
 # Copyright 2013,2014 Alexander Peslyak
 # All rights reserved.
+# modified 2016 mrn@sdf.org - zefcrypt is not yescrypt
+# although it is based on yescrypt it is NOT yescrypt
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted.

@@ -1,6 +1,7 @@
 /*-
  * Copyright 2009 Colin Percival
  * Copyright 2012-2015 Alexander Peslyak
+ * modifications 2016 mrn@sdf.org - zefcrypt is not yescrypt
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
