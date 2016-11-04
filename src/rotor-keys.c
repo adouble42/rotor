@@ -132,6 +132,10 @@ struct NtruEncKeyPair rotor_keypair_generate() {
       printf("rotor_keypair_generate: keygen fail\n");
   ntru_rand_release(&rand_ctx);
 #ifdef __ROTOR_MLOCK
+  burn(&rng, sizeof(rng));
+  burn(&rand_ctx, sizeof(rand_ctx));
+#endif
+#ifdef __ROTOR_MLOCK
   munlock(&rng, sizeof(rng));
   munlock(&rand_ctx, sizeof(rand_ctx));
 #endif
@@ -191,6 +195,11 @@ void rotor_exp_armorpriv(uint8_t *priv_keyx, char *secret, int s_len, char *outf
 	x=0;
       }
     }
+  burn(&shk_outp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  burn(&shk_finalp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  burn(&secret, sizeof(secret));
+  burn(&priv_keyx, sizeof(priv_keyx));
+    
 #ifdef __ROTOR_MLOCK
   munlock(&shk_outp, (sizeof(uint8_t)*NTRU_PRIVLEN));
   munlock(&shk_finalp, (sizeof(uint8_t)*NTRU_PRIVLEN));
@@ -258,7 +267,16 @@ struct NtruEncPrivKey rotor_load_armorpriv(const uint8_t *secret, int s_len, cha
   char *stripchars = "\r\n";
   FILE *In=NULL;
   int i, progress;
-
+#ifdef __ROTOR_MLOCK
+  mlock(&kr_out, sizeof(NtruEncPrivKey));
+  mlock(&shk_outp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  mlock(&shk_finalp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  mlock(&priv_imp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  mlock(&p_buf, (sizeof(char)*((sizeof(priv_imp)*2)+30)));
+  mlock(&p_buf2, (sizeof(char)*((sizeof(priv_imp)*2)+30)));
+  mlock(&secret, sizeof(secret));
+  mlock(&dk, (sizeof(uint8_t)*64));
+#endif
   yescrypt_init_local(&locald);
   printf("modified yescrypt KDF initialized\n");
   printf("current yescrypt parameters: 32/8/8/12/9/RW/64\n");
@@ -303,6 +321,15 @@ struct NtruEncPrivKey rotor_load_armorpriv(const uint8_t *secret, int s_len, cha
     printf("key decrypted.\n");
     ntru_import_priv(shk_outp, &kr_out);
     _passwdqc_memzero(&shk_outp, sizeof(shk_outp)); // burn it with fire!!!
+#ifdef __ROTOR_MLOCK
+  munlock(&shk_outp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  munlock(&shk_finalp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  munlock(&priv_imp, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  munlock(&p_buf, (sizeof(char)*((sizeof(priv_imp)*2)+30)));
+  munlock(&p_buf2, (sizeof(char)*((sizeof(priv_imp)*2)+30)));
+  munlock(&secret, sizeof(secret));
+  munlock(&dk, (sizeof(uint8_t)*64));
+#endif
     return(kr_out);
   }
 }
@@ -353,7 +380,17 @@ void rotor_user_keygen(char *skname, char *pkname) {
   int i, dklen,v,ok_pass;
   dklen=64;
   v=1;
-  
+ #ifdef __ROTOR_MLOCK
+  mlock(&kp, sizeof(NtruEncKeyPair));
+  mlock(&rng, sizeof(NtruRandGen));
+  mlock(&rand_ctx, sizeof(NtruRandContext));
+  mlock(&priv_arr, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  mlock(&password_char, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  mlock(&secret, (sizeof(uint8_t)*64));
+  mlock(&verify, (sizeof(uint8_t)*64));
+  mlock(&dk, (sizeof(uint8_t)*64));
+  mlock(&dkt, (sizeof(uint8_t)*64));
+#endif 
   tcgetattr(STDIN_FILENO, &oldt); // kill the lights
   newt=oldt;
   newt.c_lflag &= ~(ECHO);
@@ -404,4 +441,15 @@ void rotor_user_keygen(char *skname, char *pkname) {
   printf("exporting hex armored NTRU public key to file %s\n", pkname);
   rotor_exp_armorpub(pub_arr, pkname);
   _passwdqc_memzero(&pub_arr, NTRU_PUBLEN); // bye
+  #ifdef __ROTOR_MLOCK
+  munlock(&kp, sizeof(NtruEncKeyPair));
+  munlock(&rng, sizeof(NtruRandGen));
+  munlock(&rand_ctx, sizeof(NtruRandContext));
+  munlock(&priv_arr, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  munlock(&password_char, (sizeof(uint8_t)*NTRU_PRIVLEN));
+  munlock(&secret, (sizeof(uint8_t)*64));
+  munlock(&verify, (sizeof(uint8_t)*64));
+  munlock(&dk, (sizeof(uint8_t)*64));
+  munlock(&dkt, (sizeof(uint8_t)*64));
+#endif
 }
