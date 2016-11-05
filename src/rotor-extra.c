@@ -43,5 +43,5 @@ void rotor_show_help() {
   printf("--pubkey:     specify name of public key, default NTRUPublic.key\n");
   printf("--enc:        encrypt file specified by --infile\n");
   printf("--dec:        decrypt file specified by --infile\n");
-  printf("\n\nrotor uses a hybrid of NTRU public key encryption and the SHAKE-256 XOF function to encrypt your files.\nthis is experimental software!!! you have been warned\n");
+  printf("\n\nrotor uses a hybrid of NTRU public key encryption, the SHAKE-256 XOF function used in multiple modes, and an outer layer of 256 bit Salsa20 with a separate key to encrypt your files.\nthis is experimental software!!! you have been warned\n");
 }
