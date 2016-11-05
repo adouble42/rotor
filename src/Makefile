@@ -1,7 +1,8 @@
 CC=clang
 
-rotor: libbz2 libntru progressbar.a libyescrypt.a libpasswdqc.a
-	clang -o rotor rotor.c rotor-keys.c rotor-crypt.c salsa20.c rotor-console.c shake.c rotor-extra.c ../lib/libpasswdqc.a ../lib/libyescrypt.a ../lib/libbz2.a ../lib/libntru.a ../lib/progressbar.a -I../libntru/src -L/usr/local/lib -I../bzlib -I../include -I../progressbar/include -I./ -lcrypto -lm -ltermcap -lomp
+rotor: libbz2 libntru progressbar.a libyescrypt.a libpasswdqc.a libskein.a
+	clang -o rotor rotor.c rotor-keys.c rotor-crypt.c salsa20.c rotor-console.c shake.c rotor-extra.c ../lib/libpasswdqc.a ../lib/libyescrypt.a ../lib/libbz2.a ../lib/libntru.a ../lib/libskein.a ../lib/progressbar.a -I../libntru/src -L/usr/local/lib -I../bzlib -I../include -I../progressbar/include -I./ -lcrypto -lm -ltermcap -lomp
+
 libbz2:
 	make -C ../bzlib libbz2.a
 	mv ../bzlib/libbz2.a ../lib
@@ -15,6 +16,9 @@ libyescrypt.a:
 
 libpasswdqc.a:
 	make -C ../passwdqc-1.3.1 libpasswdqc.a
+
+libskein.a:
+	make -C ../skein libskein.a
 
 progressbar.a:
 	make -C ../progressbar progressbar.a

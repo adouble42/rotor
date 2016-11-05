@@ -55,6 +55,7 @@
 
 struct fileHeader {
   int fileSize;
+  int cryptMode;
 };
 
 #define burn(mem,size) do { volatile char *burnm = (volatile char *)(mem); int burnc = size; while (burnc--) *burnm++ = 0; } while (0)
