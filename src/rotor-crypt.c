@@ -76,9 +76,8 @@ void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname) {
   ntru_decrypt((void *)decptr, &kr, &EES1087EP2,(uint8_t *)salsa_seed, (uint16_t *) &dec_len);
   printf("decrypting: source -  %s | target - %s\n",sfname, ofname);
   FIPS202_SHAKE256(shake_key, 170, (unsigned char *) &stream_block, 170);
-  strncpy(decp, salsa_seed, 165);
-  FIPS202_SHAKE256(salsa_seed, 170, (uint8_t *) salsa_nonce, 8);
-  FIPS202_SHAKE256((void *)decptr, NTRU_ENCLEN, (uint8_t *) salsa_key, 32);
+  FIPS202_SHAKE256(shake_key, 170, (uint8_t *) salsa_nonce, 8);
+  FIPS202_SHAKE256(salsa_seed, 170, (uint8_t *) salsa_key, 32);
   blocks = myInfo.fileSize;
   remainder = (int) shake_key[1];
   int blockCount = 0;
@@ -194,9 +193,8 @@ void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname){
     FIPS202_SHAKE256(shake_key, 170, (uint8_t *) stream_block, 170);
     if (ntru_encrypt(salsa_seed, 170, &kr.pub, &EES1087EP2, &rand_sk_ctx, enc) == NTRU_SUCCESS)
 	fwrite(enc, sizeof(enc),1, output);
-    strncpy(enc, salsa_seed, 165);
-    FIPS202_SHAKE256(salsa_seed, 170, (uint8_t *) salsa_nonce, 8);
-    FIPS202_SHAKE256(enc, NTRU_ENCLEN, (uint8_t *) salsa_key, 32);    
+    FIPS202_SHAKE256(shake_key, 170, (uint8_t *) salsa_nonce, 8);
+    FIPS202_SHAKE256(salsa_seed, 170, (uint8_t *) salsa_key, 32);    
     while ((nt=fread((void *)fptr,sizeof(char), 170, input))) {
       for (xx=0;xx<nt;xx++) {
 	stream_final[xx] = fbuf[xx] ^ stream_block[xx];
