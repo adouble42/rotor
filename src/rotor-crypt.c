@@ -69,13 +69,11 @@ void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname, char *key
       printf("rotor_decrypt_file: rng_sk fail\n");
   input = fopen(keyfname, "rb");
   output = fopen(ofname, "wb");
-  printf("ok");
   fread(&myInfo,sizeof(struct fileHeader),1,input);
   fread((void *)decptr,sizeof(char),1495,input);
   ntru_decrypt((void *)decptr, &kr, &EES1087EP2,(uint8_t *)shake_key, (uint16_t *) &dec_len);
   fread((void *)decptr,sizeof(char),1495,input);
   fclose(input);
-  printf("ok");
   input = fopen(sfname, "rb");
 
   ntru_decrypt((void *)decptr, &kr, &EES1087EP2,(uint8_t *)salsa_seed, (uint16_t *) &dec_len);
