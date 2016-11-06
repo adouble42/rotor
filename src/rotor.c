@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
   char skname[64];
   char sfname[64];
   char ofname[64];
+  char keyfname[64];
   int encMode = 0;
   int extMode = 0;
   int decMode = 0;
@@ -74,8 +75,8 @@ int main(int argc, char *argv[]) {
     }
     if (strcmp(argv[opc], "--ext") == 0) {
       extMode = 1;
-      strncpy(ofname, sfname, 64);
-      strncat(ofname, ".enc", 64);
+      strncpy(keyfname, sfname, 64);
+      strncat(keyfname, ".key", 64);
     }
     if (strcmp(argv[opc], "--dec") == 0) {
       decMode = 1;

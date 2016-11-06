@@ -33,7 +33,7 @@
  *
  */
 
-void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname) {
+void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname, char *kefyname) {
   NtruRandGen rng_sk = NTRU_RNG_DEFAULT;
   NtruRandContext rand_sk_ctx;
   uint8_t decp[NTRU_ENCLEN];
@@ -67,12 +67,15 @@ void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname) {
 
   if (ntru_rand_init(&rand_sk_ctx, &rng_sk) != NTRU_SUCCESS)
       printf("rotor_decrypt_file: rng_sk fail\n");
-  input = fopen(sfname, "rb");
+  input = fopen(keyfname, "rb");
   output = fopen(ofname, "wb");
   fread(&myInfo,sizeof(struct fileHeader),1,input);
   fread((void *)decptr,sizeof(char),1495,input);
   ntru_decrypt((void *)decptr, &kr, &EES1087EP2,(uint8_t *)shake_key, (uint16_t *) &dec_len);
   fread((void *)decptr,sizeof(char),1495,input);
+  fclose(input);
+  input = fopen(sfname, "rb");
+
   ntru_decrypt((void *)decptr, &kr, &EES1087EP2,(uint8_t *)salsa_seed, (uint16_t *) &dec_len);
   printf("decrypting: source -  %s | target - %s\n",sfname, ofname);
   FIPS202_SHAKE256(shake_key, 170, (unsigned char *) &stream_block, 170);
@@ -131,7 +134,7 @@ void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname) {
  *
  */
 
-void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname){
+void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname, char *keyfname){
     NtruRandGen rng_sk = NTRU_RNG_DEFAULT;
     NtruRandContext rand_sk_ctx;
     uint8_t shake_key[170];
@@ -167,7 +170,7 @@ void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname){
     
     stat(sfname, &in_info);
     input = fopen(sfname, "rb");
-    output = fopen(ofname, "wb");
+    output = fopen(keyfname, "wb");
     myInfo.fileSize=in_info.st_size;
     lseek((int)input,0, SEEK_SET);
     blocks = floor((myInfo.fileSize / 170));
@@ -193,6 +196,8 @@ void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname){
     FIPS202_SHAKE256(shake_key, 170, (uint8_t *) stream_block, 170);
     if (ntru_encrypt(salsa_seed, 170, &kr.pub, &EES1087EP2, &rand_sk_ctx, enc) == NTRU_SUCCESS)
 	fwrite(enc, sizeof(enc),1, output);
+    fclose(output);
+    output=fopen(ofname, "wb");
     FIPS202_SHAKE256(shake_key, 170, (uint8_t *) salsa_nonce, 8);
     FIPS202_SHAKE256(salsa_seed, 170, (uint8_t *) salsa_key, 32);    
     while ((nt=fread((void *)fptr,sizeof(char), 170, input))) {
