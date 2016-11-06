@@ -33,7 +33,7 @@
  *
  */
 
-void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname, char *kefyname) {
+void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname, char *keyfname) {
   NtruRandGen rng_sk = NTRU_RNG_DEFAULT;
   NtruRandContext rand_sk_ctx;
   uint8_t decp[NTRU_ENCLEN];

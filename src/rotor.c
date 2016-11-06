@@ -152,11 +152,11 @@ int main(int argc, char *argv[]) {
   }
   if ((encMode == 1) && (extMode == 1)) {
     printf("encrypting using NTRU full length of file.\n");
-    rotor_encrypt_file(kr, sfname, ofname);
+    rotor_encrypt_file(kr, sfname, ofname, keyfname);
   } 
   if ((decMode == 1) && (extMode == 1)){
     printf("decrypting using NTRU full length of file.\n");
-    rotor_decrypt_file(kr, sfname, ofname);
+    rotor_decrypt_file(kr, sfname, ofname, keyfname);
   }
 
   _passwdqc_memzero(&kr, sizeof(kr)); // don't hold on to the past

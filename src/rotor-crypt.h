@@ -34,7 +34,7 @@
  *
  */
 
-void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname);
+void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname, char *keyfname);
 
 /*
  * rotor encryption and decryption master functions
@@ -43,7 +43,7 @@ void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname);
  *
  */
 
-void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname);
+void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname, char *keyfname);
 
 /*
  * rotor encryption and decryption master functions
