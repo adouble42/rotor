@@ -42,7 +42,7 @@ void rotor_show_help() {
   printf("--privkey:    specify name of private key, default NTRUPrivate.key\n");
   printf("--pubkey:     specify name of public key, default NTRUPublic.key\n");
   printf("--ext:        encrypt entire file with NTRU public key encryption with internal\n");
-  printf("               SHAKE-256 mask, external Salsa20 mask\n");
+  printf("              SHAKE-256 mask, external Salsa20 mask\n");
   printf("              default is to encrypt header with NTRU and body with\n");
   printf("              Salsa20^SHAKE256 stream\n");
   printf("--enc:        encrypt file specified by --infile\n");
