@@ -45,5 +45,23 @@ void rotor_decrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname);
 
 void rotor_encrypt_file(NtruEncKeyPair kr, char *sfname, char *ofname);
 
+/*
+ * rotor encryption and decryption master functions
+ *
+ * rotor_decrypt_file: use keypair to decrypt file
+ *
+ */
+
+void rotor_decrypt_file_sym(NtruEncKeyPair kr, char *sfname, char *ofname);
+
+/*
+ * rotor encryption and decryption master functions
+ *
+ * rotor_encrypt_file: use keypair to encrypt file
+ *
+ */
+
+void rotor_encrypt_file_sym(NtruEncKeyPair kr, char *sfname, char *ofname);
+
 
 #endif
