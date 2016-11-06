@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[opc], "--ext") == 0) {
       extMode = 1;
       strncpy(keyfname, sfname, 64);
-      strncat(keyfname, ".key", 64);
+      strncat(keyfname, ".enc.key", 64);
     }
     if (strcmp(argv[opc], "--dec") == 0) {
       decMode = 1;
