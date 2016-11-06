@@ -41,9 +41,10 @@ void rotor_show_help() {
   printf("--infile:     specify file to operate on\n");
   printf("--privkey:    specify name of private key, default NTRUPrivate.key\n");
   printf("--pubkey:     specify name of public key, default NTRUPublic.key\n");
-  printf("--ext:        encrypt entire file with NTRU public key encryption with internal SHAKE-256 mask, external Salsa20 mask\n");
+  printf("--ext:        encrypt entire file with NTRU public key encryption with internal\n");
+  printf("               SHAKE-256 mask, external Salsa20 mask\n");
   printf("              default is to encrypt header with NTRU and body with Salsa20^SHAKE256 stream\n");
   printf("--enc:        encrypt file specified by --infile\n");
   printf("--dec:        decrypt file specified by --infile\n");
-  printf("\n\nrotor uses a hybrid of NTRU public key encryption, to encrypt the header of a Salsa20-SHAKE256 combined stream, or in --ext mode, the entirety of a SHAKE-256 masked stream, obfuscated in a 256 bit Salsa20 stream with a separate key to encrypt your files. In --ext mode the main benefit is derived from the NTRU function, SHAKE and Salsa20 masks.\nthis is experimental software!!! you have been warned\n");
+  printf("\n\nthis is experimental software!!! you have been warned\n");
 }
