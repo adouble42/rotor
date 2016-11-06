@@ -75,8 +75,6 @@ int main(int argc, char *argv[]) {
     }
     if (strcmp(argv[opc], "--ext") == 0) {
       extMode = 1;
-      strncpy(keyfname, sfname, 64);
-      strncat(keyfname, ".enc.key", 64);
     }
     if (strcmp(argv[opc], "--dec") == 0) {
       decMode = 1;
@@ -152,10 +150,14 @@ int main(int argc, char *argv[]) {
   }
   if ((encMode == 1) && (extMode == 1)) {
     printf("encrypting using NTRU full length of file.\n");
+    strncpy(keyfname, sfname, 64);
+    strncat(keyfname, ".enc.key", 64);
     rotor_encrypt_file(kr, sfname, ofname, keyfname);
   } 
   if ((decMode == 1) && (extMode == 1)){
     printf("decrypting using NTRU full length of file.\n");
+    strncpy(keyfname, sfname, 64);
+    strncat(keyfname, ".key", 64);
     rotor_decrypt_file(kr, sfname, ofname, keyfname);
   }
 
